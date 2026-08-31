@@ -1,6 +1,5 @@
 import type { Metadata, Viewport } from "next";
 import { Jost, IBM_Plex_Sans_Arabic } from "next/font/google";
-import { LanguageProvider } from "@/context/LanguageContext";
 import { LogoWatermark } from "@/components/LogoWatermark";
 import "./globals.css";
 
@@ -46,9 +45,7 @@ export default function RootLayout({
     >
       <body>
         <LogoWatermark />
-        <div className="site-content">
-          <LanguageProvider>{children}</LanguageProvider>
-        </div>
+        <div className="site-content">{children}</div>
       </body>
     </html>
   );

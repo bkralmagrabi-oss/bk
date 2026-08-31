@@ -1,23 +1,14 @@
 "use client";
 
 import { useLanguage } from "@/context/LanguageContext";
-import type { TranslationKey } from "@/lib/translations";
+import { useContent } from "@/context/ContentContext";
 import { Reveal } from "./Reveal";
 
-const projects: {
-  titleKey: TranslationKey;
-  tagKey: TranslationKey;
-  thumbClass: string;
-  index: string;
-}[] = [
-  { titleKey: "project1_title", tagKey: "project1_tag", thumbClass: "thumb-1", index: "01" },
-  { titleKey: "project2_title", tagKey: "project2_tag", thumbClass: "thumb-2", index: "02" },
-  { titleKey: "project3_title", tagKey: "project3_tag", thumbClass: "thumb-3", index: "03" },
-  { titleKey: "project4_title", tagKey: "project4_tag", thumbClass: "thumb-4", index: "04" },
-];
+const THUMB_CLASSES = ["thumb-1", "thumb-2", "thumb-3", "thumb-4"];
 
 export function Portfolio() {
-  const { t } = useLanguage();
+  const { t, lang } = useLanguage();
+  const { portfolio } = useContent();
 
   return (
     <section className="portfolio" id="portfolio">
@@ -29,17 +20,36 @@ export function Portfolio() {
         </Reveal>
 
         <div className="portfolio-grid">
-          {projects.map((project, i) => (
-            <Reveal delay={i * 70} key={project.titleKey}>
-              <article className="project-card">
-                <div className={`project-thumb ${project.thumbClass}`} aria-hidden="true">
-                  <span>{project.index}</span>
-                </div>
-                <h3>{t(project.titleKey)}</h3>
-                <p>{t(project.tagKey)}</p>
-              </article>
-            </Reveal>
-          ))}
+          {portfolio.map((project, i) => {
+            const CardTag = project.link ? "a" : "article";
+            const cardProps = project.link
+              ? { href: project.link, target: "_blank", rel: "noopener noreferrer" }
+              : {};
+
+            return (
+              <Reveal delay={i * 70} key={project.id}>
+                <CardTag className="project-card" {...cardProps}>
+                  {project.imageUrl ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img
+                      className="project-thumb project-thumb-image"
+                      src={project.imageUrl}
+                      alt={project.title[lang]}
+                    />
+                  ) : (
+                    <div
+                      className={`project-thumb ${THUMB_CLASSES[i % THUMB_CLASSES.length]}`}
+                      aria-hidden="true"
+                    >
+                      <span>{String(i + 1).padStart(2, "0")}</span>
+                    </div>
+                  )}
+                  <h3>{project.title[lang]}</h3>
+                  <p>{project.tag[lang]}</p>
+                </CardTag>
+              </Reveal>
+            );
+          })}
         </div>
       </div>
     </section>

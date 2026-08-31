@@ -1,17 +1,12 @@
 "use client";
 
 import { useLanguage } from "@/context/LanguageContext";
-import type { TranslationKey } from "@/lib/translations";
+import { useContent } from "@/context/ContentContext";
 import { Reveal } from "./Reveal";
 
-const pillars: { titleKey: TranslationKey; descKey: TranslationKey; index: string }[] = [
-  { titleKey: "about_pillar1_title", descKey: "about_pillar1_desc", index: "01" },
-  { titleKey: "about_pillar2_title", descKey: "about_pillar2_desc", index: "02" },
-  { titleKey: "about_pillar3_title", descKey: "about_pillar3_desc", index: "03" },
-];
-
 export function About() {
-  const { t } = useLanguage();
+  const { t, lang } = useLanguage();
+  const { about } = useContent();
 
   return (
     <section className="about" id="about">
@@ -19,16 +14,16 @@ export function About() {
         <Reveal className="section-head">
           <p className="eyebrow">{t("about_eyebrow")}</p>
           <h2>{t("about_title")}</h2>
-          <p className="section-subtitle about-text">{t("about_text")}</p>
+          <p className="section-subtitle about-text">{about.text[lang]}</p>
         </Reveal>
 
         <div className="pillars">
-          {pillars.map((pillar, i) => (
-            <Reveal delay={i * 70} key={pillar.titleKey}>
+          {about.pillars.map((pillar, i) => (
+            <Reveal delay={i * 70} key={pillar.id}>
               <div className="pillar">
-                <span className="pillar-index">{pillar.index}</span>
-                <h3>{t(pillar.titleKey)}</h3>
-                <p>{t(pillar.descKey)}</p>
+                <span className="pillar-index">{String(i + 1).padStart(2, "0")}</span>
+                <h3>{pillar.title[lang]}</h3>
+                <p>{pillar.description[lang]}</p>
               </div>
             </Reveal>
           ))}

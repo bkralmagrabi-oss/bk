@@ -2,10 +2,12 @@
 
 import type { FormEvent } from "react";
 import { useLanguage } from "@/context/LanguageContext";
+import { useContent } from "@/context/ContentContext";
 import { Reveal } from "./Reveal";
 
 export function Contact() {
   const { t } = useLanguage();
+  const { contact } = useContent();
 
   function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -14,11 +16,17 @@ export function Contact() {
     const email = (form.elements.namedItem("email") as HTMLInputElement).value.trim();
     const message = (form.elements.namedItem("message") as HTMLTextAreaElement).value.trim();
 
+    fetch("/api/leads", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ name, email, message }),
+    }).catch(() => {});
+
     const subject = `New project inquiry from ${name}`;
     const body = `Name: ${name}\nEmail: ${email}\n\n${message}`;
 
     window.location.href =
-      "mailto:B.60@msn.com" +
+      `mailto:${contact.email}` +
       `?subject=${encodeURIComponent(subject)}` +
       `&body=${encodeURIComponent(body)}`;
   }
@@ -35,7 +43,7 @@ export function Contact() {
           <div className="contact-direct">
             <a
               className="direct-link whatsapp"
-              href="https://wa.me/966535094964"
+              href={contact.whatsapp}
               target="_blank"
               rel="noopener"
             >
@@ -44,16 +52,16 @@ export function Contact() {
               </svg>
               <span>{t("whatsapp_label")}</span>
             </a>
-            <a className="direct-link email" href="mailto:B.60@msn.com">
+            <a className="direct-link email" href={`mailto:${contact.email}`}>
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.4} aria-hidden="true">
                 <rect x="2" y="4" width="20" height="16" rx="2" />
                 <path d="m3 6 9 7 9-7" />
               </svg>
-              <span>B.60@msn.com</span>
+              <span>{contact.email}</span>
             </a>
             <a
               className="direct-link instagram"
-              href="https://instagram.com/bk.webs"
+              href={contact.instagram}
               target="_blank"
               rel="noopener"
             >
@@ -62,7 +70,7 @@ export function Contact() {
                 <circle cx="12" cy="12" r="4.2" />
                 <circle cx="17.4" cy="6.6" r="1" />
               </svg>
-              <span>@bk.webs</span>
+              <span>{contact.instagramHandle}</span>
             </a>
           </div>
         </Reveal>

@@ -6,20 +6,29 @@ import { Portfolio } from "@/components/Portfolio";
 import { About } from "@/components/About";
 import { Contact } from "@/components/Contact";
 import { Footer } from "@/components/Footer";
+import { ContentProvider } from "@/context/ContentContext";
+import { LanguageProvider } from "@/context/LanguageContext";
+import { getSiteContent } from "@/lib/content-store";
 
-export default function Home() {
+export const dynamic = "force-dynamic";
+
+export default async function Home() {
+  const content = await getSiteContent();
+
   return (
-    <>
-      <SkipLink />
-      <Header />
-      <main id="main">
-        <Hero />
-        <Services />
-        <Portfolio />
-        <About />
-        <Contact />
-      </main>
-      <Footer />
-    </>
+    <LanguageProvider>
+      <ContentProvider content={content}>
+        <SkipLink />
+        <Header />
+        <main id="main">
+          <Hero />
+          <Services />
+          <Portfolio />
+          <About />
+          <Contact />
+        </main>
+        <Footer />
+      </ContentProvider>
+    </LanguageProvider>
   );
 }
