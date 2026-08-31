@@ -700,3 +700,13 @@ html[dir="rtl"] .contact-form label { text-align: right; }
 @media (max-width: 640px) {
   .audit-scores { grid-template-columns: repeat(2, 1fr); }
 }
+
+.admin-error-banner {
+  background: #fbeae7;
+  border: 1px solid #b0392c;
+  color: #8a2c22;
+  border-radius: var(--radius);
+  padding: .8rem 1rem;
+  margin-bottom: 1.5rem;
+  font-size: .9rem;
+}

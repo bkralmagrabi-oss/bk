@@ -61,7 +61,6 @@ export function SocialDashboard({ initialData }: { initialData: SocialData }) {
       <header className="admin-header">
         <h1>Social</h1>
         <div className="admin-header-actions">
-          {error && <span className="admin-status">{error}</span>}
           <Link href="/admin" className="admin-nav-link">
             Site content
           </Link>
@@ -76,6 +75,12 @@ export function SocialDashboard({ initialData }: { initialData: SocialData }) {
           </button>
         </div>
       </header>
+
+      {error && (
+        <div className="admin-error-banner" role="alert">
+          {error}
+        </div>
+      )}
 
       <section className="crm-stats">
         <div className="crm-stat-tile">

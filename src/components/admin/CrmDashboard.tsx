@@ -152,6 +152,15 @@ export function CrmDashboard({ initialData }: { initialData: CrmData }) {
     if (res) setProjects((prev) => prev.filter((p) => p.id !== id));
   }
 
+  async function reassignProjectClient(id: string, clientId: string) {
+    if (!clientId) return;
+    const updated = await api(`/api/admin/crm/projects/${id}`, {
+      method: "PATCH",
+      body: JSON.stringify({ clientId }),
+    });
+    if (updated) setProjects((prev) => prev.map((p) => (p.id === id ? updated : p)));
+  }
+
   async function generateContract() {
     if (!contractProjectId) return;
     setGeneratingContract(true);
@@ -254,7 +263,6 @@ export function CrmDashboard({ initialData }: { initialData: CrmData }) {
       <header className="admin-header">
         <h1>Leads &amp; Clients</h1>
         <div className="admin-header-actions">
-          {error && <span className="admin-status">{error}</span>}
           <Link href="/admin" className="admin-nav-link">
             Site content
           </Link>
@@ -269,6 +277,12 @@ export function CrmDashboard({ initialData }: { initialData: CrmData }) {
           </button>
         </div>
       </header>
+
+      {error && (
+        <div className="admin-error-banner" role="alert">
+          {error}
+        </div>
+      )}
 
       <section className="crm-stats">
         <div className="crm-stat-tile">
@@ -382,7 +396,19 @@ export function CrmDashboard({ initialData }: { initialData: CrmData }) {
           <div className="admin-item" key={project.id}>
             <div className="admin-item-head">
               <strong>{project.title}</strong>
-              <span className="admin-status">{clientName(project.clientId)}</span>
+              <select
+                value={project.clientId}
+                onChange={(e) => reassignProjectClient(project.id, e.target.value)}
+              >
+                {!clients.some((c) => c.id === project.clientId) && (
+                  <option value={project.clientId}>⚠ missing client — pick one</option>
+                )}
+                {clients.map((c) => (
+                  <option key={c.id} value={c.id}>
+                    {c.name}
+                  </option>
+                ))}
+              </select>
               <span className="admin-status">
                 {project.tier} — {project.priceSar.toLocaleString("en-US")} SAR
               </span>

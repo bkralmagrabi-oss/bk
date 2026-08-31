@@ -27,6 +27,13 @@ export async function PATCH(
       return NextResponse.json({ error: "Project not found" }, { status: 404 });
     }
 
+    if (body.clientId !== undefined) {
+      const clientId = String(body.clientId).trim();
+      if (!clientId) {
+        return NextResponse.json({ error: "clientId cannot be empty" }, { status: 400 });
+      }
+      project.clientId = clientId;
+    }
     if (body.title !== undefined) project.title = String(body.title).trim();
     if (body.tier !== undefined) {
       if (!PRICING_TIERS.includes(body.tier)) {

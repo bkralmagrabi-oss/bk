@@ -75,7 +75,6 @@ export function AuditsDashboard({ initialData }: { initialData: AuditData }) {
       <header className="admin-header">
         <h1>Audits</h1>
         <div className="admin-header-actions">
-          {error && <span className="admin-status">{error}</span>}
           <Link href="/admin" className="admin-nav-link">
             Site content
           </Link>
@@ -90,6 +89,12 @@ export function AuditsDashboard({ initialData }: { initialData: AuditData }) {
           </button>
         </div>
       </header>
+
+      {error && (
+        <div className="admin-error-banner" role="alert">
+          {error}
+        </div>
+      )}
 
       <section className="admin-section">
         <h2>Website Audit</h2>
