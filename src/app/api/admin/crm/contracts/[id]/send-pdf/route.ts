@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { cookies } from "next/headers";
 import { COOKIE_NAME, verifySessionToken } from "@/lib/admin-auth";
 import { getCrmDataUntil } from "@/lib/crm-store";
-import { generateAndSendPdf } from "@/lib/pdf/send-document-pdf";
+import { sendDocumentPdfs, type LanguageChoice } from "@/lib/pdf/send-document-pdf";
 
 export const maxDuration = 60;
 
@@ -17,6 +17,9 @@ export async function POST(
   }
 
   const { id } = await params;
+  const body = await request.json().catch(() => null);
+  const lang: LanguageChoice =
+    body?.lang === "ar" || body?.lang === "en" ? body.lang : "both";
 
   const data = await getCrmDataUntil((d) => d.contracts.some((c) => c.id === id));
   const contract = data.contracts.find((c) => c.id === id);
@@ -26,15 +29,21 @@ export async function POST(
   const project = data.projects.find((p) => p.id === contract.projectId);
   const client = data.clients.find((c) => c.id === contract.clientId);
 
-  const url = `${request.nextUrl.origin}/contract/${id}`;
-  const filename = `Contract-${project?.title ?? "project"}.pdf`.replace(/\s+/g, "-");
-  const caption = `Contract: ${project?.title ?? "—"} — ${client?.name ?? "—"}`;
+  const baseUrl = `${request.nextUrl.origin}/contract/${id}`;
+  const filenameBase = `Contract-${project?.title ?? "project"}`.replace(/\s+/g, "-");
+  const captionBase = `Contract: ${project?.title ?? "—"} — ${client?.name ?? "—"}`;
 
-  try {
-    await generateAndSendPdf(url, filename, caption);
-    return NextResponse.json({ ok: true });
-  } catch (err) {
-    const message = err instanceof Error ? err.message : "Failed to generate/send PDF";
-    return NextResponse.json({ error: message }, { status: 502 });
+  const { sent, failed } = await sendDocumentPdfs(baseUrl, lang, filenameBase, captionBase);
+
+  if (sent.length === 0) {
+    const message = failed.map((f) => `${f.lang}: ${f.error}`).join("; ");
+    return NextResponse.json({ error: message || "Failed to generate/send PDF" }, { status: 502 });
   }
+
+  if (failed.length > 0) {
+    const message = failed.map((f) => `${f.lang}: ${f.error}`).join("; ");
+    return NextResponse.json({ ok: true, sent, warning: `Partial failure — ${message}` });
+  }
+
+  return NextResponse.json({ ok: true, sent });
 }

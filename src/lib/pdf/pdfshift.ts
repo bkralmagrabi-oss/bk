@@ -11,7 +11,7 @@ export async function generatePdfFromUrl(url: string): Promise<Buffer> {
     body: JSON.stringify({
       source: url,
       format: "A4",
-      margin: "0",
+      margin: "40px",
     }),
   });
 

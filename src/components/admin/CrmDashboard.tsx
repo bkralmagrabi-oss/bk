@@ -64,6 +64,7 @@ export function CrmDashboard({ initialData }: { initialData: CrmData }) {
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const [sendingPdfId, setSendingPdfId] = useState<string | null>(null);
   const [sentPdfId, setSentPdfId] = useState<string | null>(null);
+  const [docLang, setDocLang] = useState<Record<string, "ar" | "en" | "both">>({});
   const origin = useSyncExternalStore(subscribeNoop, getOriginSnapshot, getServerOriginSnapshot);
 
   const [clientDraft, setClientDraft] = useState(emptyClientDraft());
@@ -245,8 +246,18 @@ export function CrmDashboard({ initialData }: { initialData: CrmData }) {
     if (updated) setContracts((prev) => prev.map((c) => (c.id === contractId ? updated : c)));
   }
 
+  function getDocLang(id: string): "ar" | "en" | "both" {
+    return docLang[id] ?? "both";
+  }
+
+  function setDocLangFor(id: string, lang: "ar" | "en" | "both") {
+    setDocLang((prev) => ({ ...prev, [id]: lang }));
+  }
+
   async function copyContractLink(id: string) {
-    const url = `${window.location.origin}/contract/${id}`;
+    const lang = getDocLang(id);
+    const suffix = lang === "both" ? "ar" : lang;
+    const url = `${window.location.origin}/contract/${id}?lang=${suffix}`;
     try {
       await navigator.clipboard.writeText(url);
       setCopiedId(id);
@@ -273,9 +284,13 @@ export function CrmDashboard({ initialData }: { initialData: CrmData }) {
 
   async function sendPdf(kind: "contracts" | "quotes", id: string) {
     setSendingPdfId(id);
-    const result = await api(`/api/admin/crm/${kind}/${id}/send-pdf`, { method: "POST" });
+    const result = await api(`/api/admin/crm/${kind}/${id}/send-pdf`, {
+      method: "POST",
+      body: JSON.stringify({ lang: getDocLang(id) }),
+    });
     setSendingPdfId(null);
     if (result) {
+      if (result.warning) setError(result.warning);
       setSentPdfId(id);
       setTimeout(() => setSentPdfId((current) => (current === id ? null : current)), 3000);
     }
@@ -327,7 +342,9 @@ export function CrmDashboard({ initialData }: { initialData: CrmData }) {
   }
 
   async function copyQuoteLink(id: string) {
-    const url = `${window.location.origin}/quote/${id}`;
+    const lang = getDocLang(id);
+    const suffix = lang === "both" ? "ar" : lang;
+    const url = `${window.location.origin}/quote/${id}?lang=${suffix}`;
     try {
       await navigator.clipboard.writeText(url);
       setCopiedId(id);
@@ -671,6 +688,16 @@ export function CrmDashboard({ initialData }: { initialData: CrmData }) {
                 <button type="button" onClick={() => saveContract(contract)}>
                   Save changes
                 </button>
+                <select
+                  value={getDocLang(contract.id)}
+                  onChange={(e) =>
+                    setDocLangFor(contract.id, e.target.value as "ar" | "en" | "both")
+                  }
+                >
+                  <option value="both">Arabic + English</option>
+                  <option value="ar">Arabic only</option>
+                  <option value="en">English only</option>
+                </select>
                 <button type="button" onClick={() => copyContractLink(contract.id)}>
                   {copiedId === contract.id ? "Copied!" : "Copy link"}
                 </button>
@@ -812,6 +839,14 @@ export function CrmDashboard({ initialData }: { initialData: CrmData }) {
               <button type="button" onClick={() => saveQuote(quote)}>
                 Save changes
               </button>
+              <select
+                value={getDocLang(quote.id)}
+                onChange={(e) => setDocLangFor(quote.id, e.target.value as "ar" | "en" | "both")}
+              >
+                <option value="both">Arabic + English</option>
+                <option value="ar">Arabic only</option>
+                <option value="en">English only</option>
+              </select>
               <button type="button" onClick={() => copyQuoteLink(quote.id)}>
                 {copiedId === quote.id ? "Copied!" : "Copy link"}
               </button>
