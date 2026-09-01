@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useSyncExternalStore } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import type {
@@ -23,6 +23,20 @@ import {
   PROJECT_STATUSES,
   QUOTE_STATUSES,
 } from "@/lib/crm-types";
+
+// window.location.origin never changes during the page's lifetime, so a
+// no-op subscribe is fine — this just needs a value that's consistent
+// between the server render (null) and the client's first paint, updating
+// to the real origin without causing a hydration mismatch.
+function subscribeNoop() {
+  return () => {};
+}
+function getOriginSnapshot() {
+  return window.location.origin;
+}
+function getServerOriginSnapshot() {
+  return null;
+}
 
 function emptyClientDraft() {
   return { name: "", company: "", email: "", phone: "", notes: "" };
@@ -50,6 +64,7 @@ export function CrmDashboard({ initialData }: { initialData: CrmData }) {
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const [sendingPdfId, setSendingPdfId] = useState<string | null>(null);
   const [sentPdfId, setSentPdfId] = useState<string | null>(null);
+  const origin = useSyncExternalStore(subscribeNoop, getOriginSnapshot, getServerOriginSnapshot);
 
   const [clientDraft, setClientDraft] = useState(emptyClientDraft());
   const [projectDraft, setProjectDraft] = useState(emptyProjectDraft());
@@ -242,11 +257,12 @@ export function CrmDashboard({ initialData }: { initialData: CrmData }) {
   }
 
   function whatsappLink(contract: Contract): string | null {
+    if (!origin) return null;
     const client = clients.find((c) => c.id === contract.clientId);
     if (!client?.phone) return null;
     const digits = client.phone.replace(/[^0-9]/g, "");
     if (!digits) return null;
-    const url = `${window.location.origin}/contract/${contract.id}`;
+    const url = `${origin}/contract/${contract.id}`;
     const text = `Hi ${client.name}, here's your contract from BK Web Design: ${url}`;
     return `https://wa.me/${digits}?text=${encodeURIComponent(text)}`;
   }
