@@ -39,6 +39,8 @@ export type ContactInfo = {
   whatsapp: string;
   instagram: string;
   instagramHandle: string;
+  tiktok: string;
+  tiktokHandle: string;
 };
 
 export type FooterContent = {

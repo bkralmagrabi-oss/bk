@@ -126,6 +126,8 @@ export const defaultContent: SiteContent = {
     whatsapp: "https://wa.me/966535094964",
     instagram: "https://instagram.com/bk.webs",
     instagramHandle: "@bk.webs",
+    tiktok: "https://www.tiktok.com/@bk.webs",
+    tiktokHandle: "@bk.webs",
   },
   footer: {
     tagline: { en: "Simple. Clean. Impactful.", ar: "بساطة. نقاء. تأثير." },

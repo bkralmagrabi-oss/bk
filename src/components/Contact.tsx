@@ -72,6 +72,20 @@ export function Contact() {
               </svg>
               <span>{contact.instagramHandle}</span>
             </a>
+            {contact.tiktok && (
+              <a
+                className="direct-link tiktok"
+                href={contact.tiktok}
+                target="_blank"
+                rel="noopener"
+              >
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.4} aria-hidden="true">
+                  <path d="M16.5 3v9.6a3.9 3.9 0 1 1-3.4-3.87" strokeLinecap="round" strokeLinejoin="round" />
+                  <path d="M16.5 3c.3 2.5 1.9 4.3 4.5 4.6" strokeLinecap="round" strokeLinejoin="round" />
+                </svg>
+                <span>{contact.tiktokHandle}</span>
+              </a>
+            )}
           </div>
         </Reveal>
 

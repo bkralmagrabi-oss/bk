@@ -426,6 +426,27 @@ export function AdminEditor({ initialContent }: { initialContent: SiteContent })
             }
           />
         </div>
+        <div className="admin-field">
+          <label>TikTok link</label>
+          <input
+            value={content.contact.tiktok}
+            onChange={(e) =>
+              setContent({ ...content, contact: { ...content.contact, tiktok: e.target.value } })
+            }
+          />
+        </div>
+        <div className="admin-field">
+          <label>TikTok handle (display text)</label>
+          <input
+            value={content.contact.tiktokHandle}
+            onChange={(e) =>
+              setContent({
+                ...content,
+                contact: { ...content.contact, tiktokHandle: e.target.value },
+              })
+            }
+          />
+        </div>
       </section>
 
       <section className="admin-section">
