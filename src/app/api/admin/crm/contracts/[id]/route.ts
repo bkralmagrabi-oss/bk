@@ -27,8 +27,10 @@ export async function PATCH(
       return NextResponse.json({ error: "Contract not found" }, { status: 404 });
     }
 
-    if (body.scopeOfWork !== undefined) contract.scopeOfWork = String(body.scopeOfWork);
-    if (body.terms !== undefined) contract.terms = String(body.terms);
+    if (body.scopeOfWorkEn !== undefined) contract.scopeOfWorkEn = String(body.scopeOfWorkEn);
+    if (body.scopeOfWorkAr !== undefined) contract.scopeOfWorkAr = String(body.scopeOfWorkAr);
+    if (body.termsEn !== undefined) contract.termsEn = String(body.termsEn);
+    if (body.termsAr !== undefined) contract.termsAr = String(body.termsAr);
     if (body.priceSar !== undefined) {
       const price = Number(body.priceSar);
       if (!Number.isFinite(price)) {

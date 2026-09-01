@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { cookies } from "next/headers";
 import { COOKIE_NAME, verifySessionToken } from "@/lib/admin-auth";
-import { getCrmData, getCrmDataUntil, saveCrmData } from "@/lib/crm-store";
-import { PRICING_TIERS, PROJECT_STATUSES } from "@/lib/crm-types";
+import { getCrmDataUntil, saveCrmData } from "@/lib/crm-store";
+import { QUOTE_STATUSES } from "@/lib/crm-types";
 
 export async function PATCH(
   request: NextRequest,
@@ -21,51 +21,37 @@ export async function PATCH(
   }
 
   try {
-    const data = await getCrmDataUntil((d) => d.projects.some((p) => p.id === id));
-    const project = data.projects.find((p) => p.id === id);
-    if (!project) {
-      return NextResponse.json({ error: "Project not found" }, { status: 404 });
+    const data = await getCrmDataUntil((d) => d.quotes.some((q) => q.id === id));
+    const quote = data.quotes.find((q) => q.id === id);
+    if (!quote) {
+      return NextResponse.json({ error: "Quote not found" }, { status: 404 });
     }
 
-    if (body.clientId !== undefined) {
-      const clientId = String(body.clientId).trim();
-      if (!clientId) {
-        return NextResponse.json({ error: "clientId cannot be empty" }, { status: 400 });
-      }
-      project.clientId = clientId;
-    }
-    if (body.title !== undefined) project.title = String(body.title).trim();
-    if (body.tier !== undefined) {
-      if (!PRICING_TIERS.includes(body.tier)) {
-        return NextResponse.json({ error: "Invalid tier" }, { status: 400 });
-      }
-      project.tier = body.tier;
-    }
+    if (body.scopeOfWorkEn !== undefined) quote.scopeOfWorkEn = String(body.scopeOfWorkEn);
+    if (body.scopeOfWorkAr !== undefined) quote.scopeOfWorkAr = String(body.scopeOfWorkAr);
+    if (body.termsEn !== undefined) quote.termsEn = String(body.termsEn);
+    if (body.termsAr !== undefined) quote.termsAr = String(body.termsAr);
     if (body.priceSar !== undefined) {
       const price = Number(body.priceSar);
       if (!Number.isFinite(price)) {
         return NextResponse.json({ error: "Invalid price" }, { status: 400 });
       }
-      project.priceSar = price;
+      quote.priceSar = price;
     }
-    if (body.features !== undefined) {
-      project.features = Array.isArray(body.features)
-        ? body.features.filter((f: unknown) => typeof f === "string")
-        : [];
-    }
+    if (body.notes !== undefined) quote.notes = body.notes ? String(body.notes) : null;
+
     if (body.status !== undefined) {
-      if (!PROJECT_STATUSES.includes(body.status)) {
+      if (!QUOTE_STATUSES.includes(body.status)) {
         return NextResponse.json({ error: "Invalid status" }, { status: 400 });
       }
-      project.status = body.status;
+      const now = new Date().toISOString();
+      if (body.status === "sent" && quote.status !== "sent") quote.sentAt = now;
+      quote.status = body.status;
     }
-    if (body.notes !== undefined) {
-      project.notes = body.notes ? String(body.notes) : null;
-    }
-    project.updatedAt = new Date().toISOString();
+    quote.updatedAt = new Date().toISOString();
 
     await saveCrmData(data);
-    return NextResponse.json(project);
+    return NextResponse.json(quote);
   } catch {
     return NextResponse.json(
       { error: "Storage is not configured (missing BLOB_READ_WRITE_TOKEN)" },
@@ -87,10 +73,8 @@ export async function DELETE(
   const { id } = await params;
 
   try {
-    const data = await getCrmData();
-    data.projects = data.projects.filter((p) => p.id !== id);
-    data.contracts = data.contracts.filter((c) => c.projectId !== id);
-    data.quotes = data.quotes.filter((q) => q.projectId !== id);
+    const data = await getCrmDataUntil((d) => d.quotes.some((q) => q.id === id));
+    data.quotes = data.quotes.filter((q) => q.id !== id);
     await saveCrmData(data);
     return NextResponse.json({ ok: true });
   } catch {

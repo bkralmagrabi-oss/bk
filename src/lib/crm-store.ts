@@ -1,5 +1,21 @@
 import { head, put } from "@vercel/blob";
-import { emptyCrmData, isValidCrmData, type CrmData } from "./crm-types";
+import { emptyCrmData, type CrmData } from "./crm-types";
+
+// Normalizes rather than validate-or-reject: an older document missing a
+// newly-added top-level array (e.g. "quotes" added after real production
+// data existed with only leads/clients/projects/contracts) must not be
+// treated as invalid and discarded wholesale — that would silently wipe
+// real data from view. Each array defaults independently instead.
+function normalizeCrmData(value: unknown): CrmData {
+  const v = (value && typeof value === "object" ? value : {}) as Record<string, unknown>;
+  return {
+    leads: Array.isArray(v.leads) ? (v.leads as CrmData["leads"]) : [],
+    clients: Array.isArray(v.clients) ? (v.clients as CrmData["clients"]) : [],
+    projects: Array.isArray(v.projects) ? (v.projects as CrmData["projects"]) : [],
+    contracts: Array.isArray(v.contracts) ? (v.contracts as CrmData["contracts"]) : [],
+    quotes: Array.isArray(v.quotes) ? (v.quotes as CrmData["quotes"]) : [],
+  };
+}
 
 const CRM_PATHNAME = "content/crm-data.json";
 
@@ -34,7 +50,7 @@ async function fetchFromBlob(): Promise<CrmData> {
     if (!res.ok) return emptyCrmData;
 
     const data = await res.json();
-    const result = isValidCrmData(data) ? data : emptyCrmData;
+    const result = normalizeCrmData(data);
     setCache({ data: result, savedAt: Date.now() });
     return result;
   } catch {

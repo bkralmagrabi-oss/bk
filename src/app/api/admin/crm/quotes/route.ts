@@ -4,7 +4,7 @@ import { COOKIE_NAME, verifySessionToken } from "@/lib/admin-auth";
 import { getCrmData, getCrmDataUntil, saveCrmData } from "@/lib/crm-store";
 import { DEFAULT_CONTRACT_TERMS, DEFAULT_CONTRACT_TERMS_AR } from "@/lib/contract-defaults";
 import { draftBilingualScopeOfWork } from "@/lib/ai/contract-agent";
-import type { Contract } from "@/lib/crm-types";
+import type { Quote } from "@/lib/crm-types";
 
 export async function GET() {
   const cookieStore = await cookies();
@@ -14,7 +14,7 @@ export async function GET() {
   }
 
   const data = await getCrmData();
-  return NextResponse.json(data.contracts);
+  return NextResponse.json(data.quotes);
 }
 
 export async function POST(request: NextRequest) {
@@ -48,11 +48,11 @@ export async function POST(request: NextRequest) {
       scopeOfWorkEn = drafted.en;
       scopeOfWorkAr = drafted.ar;
     } catch {
-      // AI drafting unavailable/failed — contract is still created, admin fills in manually.
+      // AI drafting unavailable/failed — quote is still created, admin fills in manually.
     }
 
     const now = new Date().toISOString();
-    const contract: Contract = {
+    const quote: Quote = {
       id: crypto.randomUUID(),
       projectId: project.id,
       clientId: client.id,
@@ -62,17 +62,15 @@ export async function POST(request: NextRequest) {
       termsAr: DEFAULT_CONTRACT_TERMS_AR,
       priceSar: project.priceSar,
       status: "draft",
-      signedFileUrl: null,
       createdAt: now,
       updatedAt: now,
       sentAt: null,
-      signedAt: null,
       notes: null,
     };
 
-    data.contracts.push(contract);
+    data.quotes.push(quote);
     await saveCrmData(data);
-    return NextResponse.json(contract);
+    return NextResponse.json(quote);
   } catch {
     return NextResponse.json(
       { error: "Storage is not configured (missing BLOB_READ_WRITE_TOKEN)" },

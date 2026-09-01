@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { getCrmData } from "@/lib/crm-store";
+import { BilingualDocumentPage } from "@/components/BilingualDocumentPage";
 
 export const dynamic = "force-dynamic";
 
@@ -23,53 +24,19 @@ export default async function ContractPage({
   const client = data.clients.find((c) => c.id === contract.clientId);
 
   return (
-    <div className="contract-page">
-      <div className="contract-doc">
-        <header className="contract-header">
-          <span className="contract-brand">BK Web Design</span>
-          <span className="contract-doc-label">Contract</span>
-        </header>
-
-        <dl className="contract-meta">
-          <div>
-            <dt>Client</dt>
-            <dd>{client?.name ?? "—"}{client?.company ? ` (${client.company})` : ""}</dd>
-          </div>
-          <div>
-            <dt>Project</dt>
-            <dd>{project?.title ?? "—"}</dd>
-          </div>
-          <div>
-            <dt>Price</dt>
-            <dd>{contract.priceSar.toLocaleString("en-US")} SAR</dd>
-          </div>
-          <div>
-            <dt>Date</dt>
-            <dd>{new Date(contract.createdAt).toLocaleDateString("en-US")}</dd>
-          </div>
-        </dl>
-
-        <section className="contract-section">
-          <h2>Scope of Work</h2>
-          <p className="contract-body-text">{contract.scopeOfWork || "—"}</p>
-        </section>
-
-        <section className="contract-section">
-          <h2>Terms</h2>
-          <p className="contract-body-text">{contract.terms}</p>
-        </section>
-
-        <section className="contract-signature">
-          <div>
-            <span className="contract-sig-line" />
-            <span>Signed</span>
-          </div>
-          <div>
-            <span className="contract-sig-line" />
-            <span>Date</span>
-          </div>
-        </section>
-      </div>
-    </div>
+    <BilingualDocumentPage
+      docLabelEn="Contract"
+      docLabelAr="عقد"
+      clientName={client?.name ?? "—"}
+      clientCompany={client?.company ?? null}
+      projectTitle={project?.title ?? "—"}
+      priceSar={contract.priceSar}
+      date={new Date(contract.createdAt).toLocaleDateString("en-US")}
+      scopeOfWorkEn={contract.scopeOfWorkEn}
+      scopeOfWorkAr={contract.scopeOfWorkAr}
+      termsEn={contract.termsEn}
+      termsAr={contract.termsAr}
+      showSignature
+    />
   );
 }

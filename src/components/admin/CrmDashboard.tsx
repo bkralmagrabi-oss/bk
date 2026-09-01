@@ -13,12 +13,15 @@ import type {
   PricingTier,
   Project,
   ProjectStatus,
+  Quote,
+  QuoteStatus,
 } from "@/lib/crm-types";
 import {
   CONTRACT_STATUSES,
   LEAD_STATUSES,
   PRICING_TIERS,
   PROJECT_STATUSES,
+  QUOTE_STATUSES,
 } from "@/lib/crm-types";
 
 function emptyClientDraft() {
@@ -42,13 +45,18 @@ export function CrmDashboard({ initialData }: { initialData: CrmData }) {
   const [clients, setClients] = useState<Client[]>(initialData.clients);
   const [projects, setProjects] = useState<Project[]>(initialData.projects);
   const [contracts, setContracts] = useState<Contract[]>(initialData.contracts);
+  const [quotes, setQuotes] = useState<Quote[]>(initialData.quotes);
   const [error, setError] = useState<string | null>(null);
   const [copiedId, setCopiedId] = useState<string | null>(null);
+  const [sendingPdfId, setSendingPdfId] = useState<string | null>(null);
+  const [sentPdfId, setSentPdfId] = useState<string | null>(null);
 
   const [clientDraft, setClientDraft] = useState(emptyClientDraft());
   const [projectDraft, setProjectDraft] = useState(emptyProjectDraft());
   const [contractProjectId, setContractProjectId] = useState("");
   const [generatingContract, setGeneratingContract] = useState(false);
+  const [quoteProjectId, setQuoteProjectId] = useState("");
+  const [generatingQuote, setGeneratingQuote] = useState(false);
 
   async function handleLogout() {
     await fetch("/api/admin/logout", { method: "POST" });
@@ -183,8 +191,10 @@ export function CrmDashboard({ initialData }: { initialData: CrmData }) {
     const updated = await api(`/api/admin/crm/contracts/${contract.id}`, {
       method: "PATCH",
       body: JSON.stringify({
-        scopeOfWork: contract.scopeOfWork,
-        terms: contract.terms,
+        scopeOfWorkEn: contract.scopeOfWorkEn,
+        scopeOfWorkAr: contract.scopeOfWorkAr,
+        termsEn: contract.termsEn,
+        termsAr: contract.termsAr,
         priceSar: contract.priceSar,
       }),
     });
@@ -243,6 +253,72 @@ export function CrmDashboard({ initialData }: { initialData: CrmData }) {
 
   function projectTitle(projectId: string) {
     return projects.find((p) => p.id === projectId)?.title ?? "—";
+  }
+
+  async function sendPdf(kind: "contracts" | "quotes", id: string) {
+    setSendingPdfId(id);
+    const result = await api(`/api/admin/crm/${kind}/${id}/send-pdf`, { method: "POST" });
+    setSendingPdfId(null);
+    if (result) {
+      setSentPdfId(id);
+      setTimeout(() => setSentPdfId((current) => (current === id ? null : current)), 3000);
+    }
+  }
+
+  async function generateQuote() {
+    if (!quoteProjectId) return;
+    setGeneratingQuote(true);
+    const quote = await api("/api/admin/crm/quotes", {
+      method: "POST",
+      body: JSON.stringify({ projectId: quoteProjectId }),
+    });
+    setGeneratingQuote(false);
+    if (quote) {
+      setQuotes((prev) => [...prev, quote]);
+      setQuoteProjectId("");
+    }
+  }
+
+  function updateQuoteLocal(id: string, patch: Partial<Quote>) {
+    setQuotes((prev) => prev.map((q) => (q.id === id ? { ...q, ...patch } : q)));
+  }
+
+  async function saveQuote(quote: Quote) {
+    const updated = await api(`/api/admin/crm/quotes/${quote.id}`, {
+      method: "PATCH",
+      body: JSON.stringify({
+        scopeOfWorkEn: quote.scopeOfWorkEn,
+        scopeOfWorkAr: quote.scopeOfWorkAr,
+        termsEn: quote.termsEn,
+        termsAr: quote.termsAr,
+        priceSar: quote.priceSar,
+      }),
+    });
+    if (updated) setQuotes((prev) => prev.map((q) => (q.id === quote.id ? updated : q)));
+  }
+
+  async function updateQuoteStatus(id: string, status: QuoteStatus) {
+    const updated = await api(`/api/admin/crm/quotes/${id}`, {
+      method: "PATCH",
+      body: JSON.stringify({ status }),
+    });
+    if (updated) setQuotes((prev) => prev.map((q) => (q.id === id ? updated : q)));
+  }
+
+  async function deleteQuote(id: string) {
+    const res = await api(`/api/admin/crm/quotes/${id}`, { method: "DELETE" });
+    if (res) setQuotes((prev) => prev.filter((q) => q.id !== id));
+  }
+
+  async function copyQuoteLink(id: string) {
+    const url = `${window.location.origin}/quote/${id}`;
+    try {
+      await navigator.clipboard.writeText(url);
+      setCopiedId(id);
+      setTimeout(() => setCopiedId((current) => (current === id ? null : current)), 2000);
+    } catch {
+      setError("Could not copy link");
+    }
   }
 
   const pipelineValue = projects
@@ -532,21 +608,47 @@ export function CrmDashboard({ initialData }: { initialData: CrmData }) {
                   }}
                 />
               </div>
-              <div className="admin-field">
-                <label>Scope of work</label>
-                <textarea
-                  rows={5}
-                  value={contract.scopeOfWork}
-                  onChange={(e) => updateContractLocal(contract.id, { scopeOfWork: e.target.value })}
-                />
+              <div className="admin-field-pair">
+                <div className="admin-field">
+                  <label>Scope of work (EN)</label>
+                  <textarea
+                    rows={5}
+                    value={contract.scopeOfWorkEn}
+                    onChange={(e) =>
+                      updateContractLocal(contract.id, { scopeOfWorkEn: e.target.value })
+                    }
+                  />
+                </div>
+                <div className="admin-field">
+                  <label>نطاق العمل (AR)</label>
+                  <textarea
+                    rows={5}
+                    dir="rtl"
+                    value={contract.scopeOfWorkAr}
+                    onChange={(e) =>
+                      updateContractLocal(contract.id, { scopeOfWorkAr: e.target.value })
+                    }
+                  />
+                </div>
               </div>
-              <div className="admin-field">
-                <label>Terms</label>
-                <textarea
-                  rows={5}
-                  value={contract.terms}
-                  onChange={(e) => updateContractLocal(contract.id, { terms: e.target.value })}
-                />
+              <div className="admin-field-pair">
+                <div className="admin-field">
+                  <label>Terms (EN)</label>
+                  <textarea
+                    rows={5}
+                    value={contract.termsEn}
+                    onChange={(e) => updateContractLocal(contract.id, { termsEn: e.target.value })}
+                  />
+                </div>
+                <div className="admin-field">
+                  <label>الشروط (AR)</label>
+                  <textarea
+                    rows={5}
+                    dir="rtl"
+                    value={contract.termsAr}
+                    onChange={(e) => updateContractLocal(contract.id, { termsAr: e.target.value })}
+                  />
+                </div>
               </div>
 
               <div className="admin-item-head">
@@ -555,6 +657,17 @@ export function CrmDashboard({ initialData }: { initialData: CrmData }) {
                 </button>
                 <button type="button" onClick={() => copyContractLink(contract.id)}>
                   {copiedId === contract.id ? "Copied!" : "Copy link"}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => sendPdf("contracts", contract.id)}
+                  disabled={sendingPdfId === contract.id}
+                >
+                  {sendingPdfId === contract.id
+                    ? "Sending..."
+                    : sentPdfId === contract.id
+                      ? "Sent!"
+                      : "Send PDF to Telegram"}
                 </button>
                 {wa && (
                   <a href={wa} target="_blank" rel="noopener" className="btn btn-ghost">
@@ -601,6 +714,121 @@ export function CrmDashboard({ initialData }: { initialData: CrmData }) {
         </div>
         <button type="button" className="admin-add" onClick={generateContract} disabled={generatingContract}>
           {generatingContract ? "Generating..." : "+ Generate contract"}
+        </button>
+      </section>
+
+      <section className="admin-section">
+        <h2>Quotes</h2>
+        {quotes.length === 0 && <p className="admin-status">No quotes yet.</p>}
+        {quotes.map((quote) => (
+          <div className="admin-item" key={quote.id}>
+            <div className="admin-item-head">
+              <strong>{projectTitle(quote.projectId)}</strong>
+              <span className="admin-status">{clientName(quote.clientId)}</span>
+              <select
+                value={quote.status}
+                onChange={(e) => updateQuoteStatus(quote.id, e.target.value as QuoteStatus)}
+              >
+                {QUOTE_STATUSES.map((s) => (
+                  <option key={s} value={s}>
+                    {s}
+                  </option>
+                ))}
+              </select>
+              <button type="button" className="admin-remove" onClick={() => deleteQuote(quote.id)}>
+                Delete
+              </button>
+            </div>
+
+            <div className="admin-field">
+              <label>Price (SAR)</label>
+              <input
+                type="text"
+                inputMode="decimal"
+                lang="en"
+                value={quote.priceSar}
+                onChange={(e) => {
+                  const num = Number(e.target.value);
+                  if (!Number.isNaN(num)) updateQuoteLocal(quote.id, { priceSar: num });
+                }}
+              />
+            </div>
+            <div className="admin-field-pair">
+              <div className="admin-field">
+                <label>Scope of work (EN)</label>
+                <textarea
+                  rows={5}
+                  value={quote.scopeOfWorkEn}
+                  onChange={(e) => updateQuoteLocal(quote.id, { scopeOfWorkEn: e.target.value })}
+                />
+              </div>
+              <div className="admin-field">
+                <label>نطاق العمل (AR)</label>
+                <textarea
+                  rows={5}
+                  dir="rtl"
+                  value={quote.scopeOfWorkAr}
+                  onChange={(e) => updateQuoteLocal(quote.id, { scopeOfWorkAr: e.target.value })}
+                />
+              </div>
+            </div>
+            <div className="admin-field-pair">
+              <div className="admin-field">
+                <label>Terms (EN)</label>
+                <textarea
+                  rows={5}
+                  value={quote.termsEn}
+                  onChange={(e) => updateQuoteLocal(quote.id, { termsEn: e.target.value })}
+                />
+              </div>
+              <div className="admin-field">
+                <label>الشروط (AR)</label>
+                <textarea
+                  rows={5}
+                  dir="rtl"
+                  value={quote.termsAr}
+                  onChange={(e) => updateQuoteLocal(quote.id, { termsAr: e.target.value })}
+                />
+              </div>
+            </div>
+
+            <div className="admin-item-head">
+              <button type="button" onClick={() => saveQuote(quote)}>
+                Save changes
+              </button>
+              <button type="button" onClick={() => copyQuoteLink(quote.id)}>
+                {copiedId === quote.id ? "Copied!" : "Copy link"}
+              </button>
+              <button
+                type="button"
+                onClick={() => sendPdf("quotes", quote.id)}
+                disabled={sendingPdfId === quote.id}
+              >
+                {sendingPdfId === quote.id
+                  ? "Sending..."
+                  : sentPdfId === quote.id
+                    ? "Sent!"
+                    : "Send PDF to Telegram"}
+              </button>
+            </div>
+          </div>
+        ))}
+
+        <div className="admin-field-pair">
+          <div className="admin-field">
+            <label>Project</label>
+            <select value={quoteProjectId} onChange={(e) => setQuoteProjectId(e.target.value)}>
+              <option value="">Select a project</option>
+              {projects.map((p) => (
+                <option key={p.id} value={p.id}>
+                  {p.title} — {clientName(p.clientId)}
+                </option>
+              ))}
+            </select>
+          </div>
+        </div>
+        <button type="button" className="admin-add" onClick={generateQuote} disabled={generatingQuote}>
+          {generatingQuote ? "Generating..." : "+ Generate quote"}
         </button>
       </section>
     </div>

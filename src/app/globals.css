@@ -675,6 +675,74 @@ html[dir="rtl"] .contact-form label { text-align: right; }
   .watermark, .site-header, .admin-header { display: none !important; }
 }
 
+/* ---------- Bilingual document page (contracts, quotes) ---------- */
+.doc-page {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 2.5rem 1.5rem 5rem;
+}
+.doc-sheet {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 2rem;
+}
+.doc-logo-header {
+  display: flex;
+  justify-content: center;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid var(--border);
+  margin-bottom: 1rem;
+}
+.doc-doclabel-row {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 1.5rem;
+}
+.doc-doclabel {
+  font-size: .9rem;
+  color: var(--gray-mid);
+  text-transform: uppercase;
+  letter-spacing: .06em;
+}
+.doc-columns {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 2rem;
+}
+.doc-col { min-width: 0; }
+.doc-col-en { border-inline-end: 1px solid var(--border); padding-inline-end: 2rem; }
+.doc-col-ar { font-family: var(--font-arabic); }
+.doc-meta {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: .8rem 1rem;
+  margin-bottom: 1.5rem;
+}
+.doc-meta dt { font-size: .7rem; color: var(--gray-mid); text-transform: uppercase; letter-spacing: .04em; }
+.doc-meta dd { margin: .15rem 0 0; font-size: .9rem; }
+.doc-col h2 { font-size: .95rem; margin: 1.2rem 0 .4rem; }
+.doc-body-text { white-space: pre-wrap; line-height: 1.6; color: var(--ink); font-size: .9rem; }
+.doc-signature {
+  margin-top: 2rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+.doc-sig-line { display: block; border-bottom: 1px solid var(--ink); height: 2rem; }
+.doc-signature span:last-child { font-size: .8rem; color: var(--gray-mid); }
+
+@media (max-width: 800px) {
+  .doc-columns { grid-template-columns: 1fr; }
+  .doc-col-en { border-inline-end: none; padding-inline-end: 0; border-bottom: 1px solid var(--border); padding-bottom: 1.5rem; margin-bottom: 1.5rem; }
+  .doc-meta { grid-template-columns: 1fr; }
+}
+
+@media print {
+  .doc-page { padding: 0; max-width: none; }
+  .doc-sheet { border: none; padding: 0; }
+}
+
 /* ---------- Audit page ---------- */
 .audit-scores {
   display: grid;

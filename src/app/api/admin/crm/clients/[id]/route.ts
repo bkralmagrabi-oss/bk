@@ -60,6 +60,7 @@ export async function DELETE(
     data.clients = data.clients.filter((c) => c.id !== id);
     data.projects = data.projects.filter((p) => p.clientId !== id);
     data.contracts = data.contracts.filter((c) => c.clientId !== id);
+    data.quotes = data.quotes.filter((q) => q.clientId !== id);
     await saveCrmData(data);
     return NextResponse.json({ ok: true });
   } catch {

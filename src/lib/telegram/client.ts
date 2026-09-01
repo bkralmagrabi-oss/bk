@@ -22,6 +22,33 @@ export async function sendMessage(
   });
 }
 
+export async function sendDocument(
+  chatId: number,
+  buffer: Buffer,
+  filename: string,
+  caption?: string,
+): Promise<void> {
+  const token = getToken();
+  const formData = new FormData();
+  formData.append("chat_id", String(chatId));
+  if (caption) formData.append("caption", caption);
+  formData.append(
+    "document",
+    new Blob([new Uint8Array(buffer)], { type: "application/pdf" }),
+    filename,
+  );
+
+  const res = await fetch(`https://api.telegram.org/bot${token}/sendDocument`, {
+    method: "POST",
+    body: formData,
+  });
+
+  if (!res.ok) {
+    const detail = await res.text().catch(() => "");
+    throw new Error(`Telegram sendDocument failed (status ${res.status})${detail ? `: ${detail}` : ""}`);
+  }
+}
+
 export async function getFileDownloadUrl(fileId: string): Promise<string | null> {
   const token = getToken();
   const res = await fetch(`https://api.telegram.org/bot${token}/getFile?file_id=${fileId}`);
